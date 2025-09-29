@@ -1,0 +1,59 @@
+
+
+services:
+  frontend:
+    build: ./ci-frontend
+    container_name: ci-frontend
+    volumes:
+      - ./ci-frontend:/app
+    networks:
+      - ci-network
+    expose:
+      - "80"
+
+  backend:
+    build: ./ci-backend
+    container_name: ci-backend
+    volumes:
+      - ./ci-backend:/var/www/html
+    networks:
+      - ci-network
+    expose:
+      - "8000"
+    
+  nginx:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    container_name: ci-nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ./ci-backend:/var/www/html
+      - ./ci-frontend/dist:/usr/share/nginx/html
+    networks:
+      - ci-network
+
+  db:
+    image: mysql:8
+    container_name: ci-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ci_uganc_db
+      MYSQL_USER: main_user_ci_uganc
+      MYSQL_PASSWORD: main_user_pass
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - ci-network
+
+networks:
+  ci-network:
+
+volumes:
+  db_data:
